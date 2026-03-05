@@ -19,6 +19,10 @@ async function createIssue(doc, repoOwner, repoName, token) {
   // Clean up title (remove quotes if present)
   const cleanTitle = doc.title ? doc.title.replace(/^["']|["']$/g, '') : '';
   
+  // Clean up description and priority
+  const cleanDescription = doc.description ? doc.description.replace(/^["']|["']$/g, '') : '';
+  const cleanPriority = doc.priority ? doc.priority.replace(/^["']|["']$/g, '') : '';
+  
   const payload = {
     title: cleanTitle,
     body: issueBody,
@@ -61,7 +65,11 @@ async function createIssue(doc, repoOwner, repoName, token) {
  * @returns {string} - Formatted issue body
  */
 function buildIssueBody(doc) {
-  let body = doc.description ? `## Description\n\n${doc.description}\n\n` : '';
+  // Clean up description and priority
+  const cleanDescription = doc.description ? doc.description.replace(/^["']|["']$/g, '') : '';
+  const cleanPriority = doc.priority ? doc.priority.replace(/^["']|["']$/g, '') : '';
+  
+  let body = cleanDescription ? `## Description\n\n${cleanDescription}\n\n` : '';
   
   body += `## Acceptance Criteria\n\n`;
   
@@ -87,8 +95,8 @@ function buildIssueBody(doc) {
     body += `## Category\n\n${doc.category}\n\n`;
   }
   
-  if (doc.priority) {
-    body += `## Priority\n\n${doc.priority}\n\n`;
+  if (cleanPriority) {
+    body += `## Priority\n\n${cleanPriority}\n\n`;
   }
   
   if (doc.filePath) {

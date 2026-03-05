@@ -56,6 +56,10 @@ function parseFrontmatter(content) {
         if (!frontmatter[currentKey]) {
           frontmatter[currentKey] = [];
         }
+      } else if (value === '""' || value === "''") {
+        // Empty string value
+        frontmatter[key] = '';
+        inList = false;
       } else {
         // Regular key-value pair
         frontmatter[key] = value;
@@ -100,7 +104,11 @@ function parseDocument(filePath) {
     }
     
     // Extract title from frontmatter or first h1
-    const title = frontmatter.title || content.match(/^# (.+)$/m)?.[1] || path.basename(filePath, '.md');
+    let title = frontmatter.title || content.match(/^# (.+)$/m)?.[1] || path.basename(filePath, '.md');
+    // Remove surrounding quotes from title
+    if (title && (title.startsWith('"') && title.endsWith('"')) || (title.startsWith("'") && title.endsWith("'"))) {
+      title = title.slice(1, -1);
+    }
     
     // Extract content after frontmatter
     const contentAfterFrontmatter = content.replace(/^---\n[\s\S]*?\n---\n/, '');
