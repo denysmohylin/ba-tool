@@ -3,6 +3,47 @@ const path = require('path');
 const { parseAllDocuments } = require('./parse-documents');
 
 /**
+ * Check if an issue with the given title already exists
+ * @param {string} repoOwner - GitHub repository owner
+ * @param {string} repoName - GitHub repository name
+ * @param {string} token - GitHub Personal Access Token
+ * @param {string} title - Issue title to check
+ * @returns {object|null} - Existing issue object or null if not found
+ */
+async function getIssueByTitle(repoOwner, repoName, token, title) {
+  const url = `https://api.github.com/repos/${repoOwner}/${repoName}/issues?state=all`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`Failed to fetch issues:`, await response.json());
+      return null;
+    }
+
+    const issues = await response.json();
+
+    // Find issue with matching title
+    for (const issue of issues) {
+      if (issue.title === title) {
+        return issue;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error fetching issues:`, error.message);
+    return null;
+  }
+}
+
+/**
  * Create a GitHub issue
  * @param {object} doc - Document object with metadata
  * @param {string} repoOwner - GitHub repository owner
@@ -12,49 +53,56 @@ const { parseAllDocuments } = require('./parse-documents');
  */
 async function createIssue(doc, repoOwner, repoName, token) {
   const url = `https://api.github.com/repos/${repoOwner}/${repoName}/issues`;
-  
+
   // Build issue body from document content
   const issueBody = buildIssueBody(doc);
-  
+
   // Clean up title (remove quotes if present)
   const cleanTitle = doc.title ? doc.title.replace(/^["']|["']$/g, '') : '';
-  
+
   // Clean up description and priority
   const cleanDescription = doc.description ? doc.description.replace(/^["']|["']$/g, '') : '';
   const cleanPriority = doc.priority ? doc.priority.replace(/^["']|["']$/g, '') : '';
-  
+
+  // Check if issue already exists
+  const existingIssue = await getIssueByTitle(repoOwner, repoName, token, cleanTitle);
+  if (existingIssue) {
+    console.log(`⊘ Skipped (already exists): ${cleanTitle} (#${existingIssue.number})`);
+    return { skipped: true, existingIssue };
+  }
+
   const payload = {
     title: cleanTitle,
     body: issueBody,
-    labels: doc.labels.length > 0 ? doc.labels : ['documentation']
+    labels: doc.labels.length > 0 ? doc.labels : ['documentation'],
   };
-  
+
   // Only add assignees if there's a valid assignee
   if (doc.assignee) {
     payload.assignees = [doc.assignee];
   }
-  
+
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `token ${token}`,
-        'Accept': 'application/vnd.github.v3+json'
+        Authorization: `token ${token}`,
+        Accept: 'application/vnd.github.v3+json',
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
-      console.error(`Failed to create issue for "${doc.title}":`, errorData);
+      console.error(`Failed to create issue for "${cleanTitle}":`, errorData);
       return null;
     }
-    
+
     const issue = await response.json();
-    console.log(`✓ Created issue #${issue.number}: ${doc.title}`);
+    console.log(`✓ Created issue #${issue.number}: ${cleanTitle}`);
     return issue;
   } catch (error) {
-    console.error(`Error creating issue for "${doc.title}":`, error.message);
+    console.error(`Error creating issue for "${cleanTitle}":`, error.message);
     return null;
   }
 }
@@ -68,21 +116,23 @@ function buildIssueBody(doc) {
   // Clean up description and priority
   const cleanDescription = doc.description ? doc.description.replace(/^["']|["']$/g, '') : '';
   const cleanPriority = doc.priority ? doc.priority.replace(/^["']|["']$/g, '') : '';
-  
+
   let body = cleanDescription ? `## Description\n\n${cleanDescription}\n\n` : '';
-  
+
   body += `## Acceptance Criteria\n\n`;
-  
+
   // Extract acceptance criteria from content
-  const acceptanceCriteriaMatch = doc.content.match(/## Acceptance Criteria([\s\S]*?)(?=## Tasks|$)/);
+  const acceptanceCriteriaMatch = doc.content.match(
+    /## Acceptance Criteria([\s\S]*?)(?=## Tasks|$)/,
+  );
   if (acceptanceCriteriaMatch) {
     body += acceptanceCriteriaMatch[1].trim() + '\n\n';
   } else {
     body += '- [ ] Define acceptance criteria\n\n';
   }
-  
+
   body += `## Tasks\n\n`;
-  
+
   // Extract tasks from content
   const tasksMatch = doc.content.match(/## Tasks([\s\S]*?)(?=## Notes|$)/);
   if (tasksMatch) {
@@ -90,19 +140,19 @@ function buildIssueBody(doc) {
   } else {
     body += '### Development\n- [ ] \n\n### QA\n- [ ] \n\n';
   }
-  
+
   if (doc.category) {
     body += `## Category\n\n${doc.category}\n\n`;
   }
-  
+
   if (cleanPriority) {
     body += `## Priority\n\n${cleanPriority}\n\n`;
   }
-  
+
   if (doc.filePath) {
     body += `## Source\n\n[Document: ${doc.filename}](${doc.filePath})\n`;
   }
-  
+
   return body;
 }
 
@@ -116,22 +166,32 @@ function buildIssueBody(doc) {
  */
 async function createIssuesFromDocs(docsDir = 'docs', repoOwner, repoName, token) {
   const documents = parseAllDocuments(docsDir);
-  
+
   if (documents.length === 0) {
     console.log('No documents found to process.');
     return [];
   }
-  
+
   const createdIssues = [];
-  
+
   for (const doc of documents) {
     const issue = await createIssue(doc, repoOwner, repoName, token);
     if (issue) {
       createdIssues.push(issue);
     }
   }
-  
-  console.log(`\nCreated ${createdIssues.length} issue(s) out of ${documents.length} document(s).`);
+
+  const skippedCount = documents.length - createdIssues.length;
+
+  if (skippedCount > 0) {
+    console.log(
+      `\nCreated ${createdIssues.length} issue(s), skipped ${skippedCount} (already exist).`,
+    );
+  } else {
+    console.log(
+      `\nCreated ${createdIssues.length} issue(s) out of ${documents.length} document(s).`,
+    );
+  }
   return createdIssues;
 }
 
@@ -155,13 +215,13 @@ function loadConfig(configPath = 'config/config.json') {
 async function main() {
   // Load configuration
   const config = loadConfig();
-  
+
   // Get environment variables (take precedence over config)
   const repoOwner = process.env.GITHUB_OWNER || config.repoOwner;
   const repoName = process.env.GITHUB_REPO || config.repoName;
   const token = process.env.GITHUB_TOKEN || config.token;
   const docsDir = process.env.DOCS_DIR || config.docsDir || 'docs';
-  
+
   // Validate required configuration
   if (!repoOwner || !repoName || !token) {
     console.error('Missing required configuration:');
@@ -171,14 +231,14 @@ async function main() {
     console.error('\nSet environment variables or create config/config.json');
     process.exit(1);
   }
-  
+
   console.log(`Creating issues for ${repoOwner}/${repoName} from ${docsDir}/`);
-  
+
   const issues = await createIssuesFromDocs(docsDir, repoOwner, repoName, token);
-  
+
   if (issues.length > 0) {
     console.log('\nCreated Issues Summary:');
-    issues.forEach(issue => {
+    issues.forEach((issue) => {
       console.log(`- #${issue.number}: ${issue.title} (${issue.html_url})`);
     });
   }
@@ -194,5 +254,5 @@ module.exports = {
   createIssue,
   buildIssueBody,
   createIssuesFromDocs,
-  loadConfig
+  loadConfig,
 };

@@ -1,5 +1,5 @@
 ---
-title: "Sample Feature Request"
+title: "Sample Feature Request - 2"
 description: "A sample document demonstrating the BA tool document format"
 type: "feature"
 priority: "high"
@@ -23,7 +23,7 @@ This is a sample document that demonstrates how to write requirements using the 
 
 ### US-001: Main User Story
 
-**As a** business user13  
+**As a** business user  
 **I want to** be able to upload documents  
 **So that** I can automatically create GitHub issues
 
