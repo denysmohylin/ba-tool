@@ -72,15 +72,15 @@ Create a `config/config.json` file:
 
 ```json
 {
-  "github": {
-    "owner": "your-github-username",
-    "repo": "your-repository-name"
-  },
-  "defaultLabels": ["ba", "needs-grooming"],
+  "repoOwner": "your-github-username",
+  "repoName": "your-repository-name",
+  "token": "",
+  "docsDir": "docs",
+  "defaultLabels": ["documentation", "triage"],
+  "defaultAssignee": "",
   "issueTemplate": {
-    "titlePrefix": "[BA]",
-    "assignTo": "",
-    "project": ""
+    "titlePrefix": "",
+    "titleSuffix": ""
   }
 }
 ```

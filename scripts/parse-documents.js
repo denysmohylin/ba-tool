@@ -17,18 +17,61 @@ function parseFrontmatter(content) {
   const frontmatterText = match[1];
   const lines = frontmatterText.split('\n');
   const frontmatter = {};
+  let currentKey = '';
+  let inList = false;
   
   for (const line of lines) {
-    const [key, ...valueParts] = line.split(': ');
-    if (key && valueParts.length > 0) {
-      let value = valueParts.join(': ').trim();
+    // Skip empty lines
+    if (line.trim() === '') {
+      continue;
+    }
+    
+    // Check if this is a new key-value pair (not indented, not a list item)
+    const keyValueMatch = line.match(/^(\w+):\s*(.*)$/);
+    
+    if (keyValueMatch) {
+      const key = keyValueMatch[1].trim();
+      const value = keyValueMatch[2].trim();
       
-      // Handle arrays (labels)
-      if (key === 'labels' && value.startsWith('[') && value.endsWith(']')) {
-        value = value.slice(1, -1).split(',').map(item => item.trim().replace(/"/g, '').replace(/'/g, ''));
+      // Check if this is a list (value starts with -)
+      if (value.startsWith('- ')) {
+        // Start of a list
+        currentKey = key;
+        inList = true;
+        if (!frontmatter[currentKey]) {
+          frontmatter[currentKey] = [];
+        }
+        // Extract the list item value (remove the - and trim, then remove quotes)
+        const listItem = value.slice(2).trim().replace(/^["']|["']$/g, '');
+        frontmatter[currentKey].push(listItem);
+      } else if (key === 'labels' && value.startsWith('[') && value.endsWith(']')) {
+        // Inline array format: labels: ["label1", "label2"]
+        const arrayContent = value.slice(1, -1).split(',').map(item => item.trim().replace(/^["']|["']$/g, ''));
+        frontmatter[key] = arrayContent;
+        inList = false;
+      } else if (value === '') {
+        // Key with empty value - might be a list header like "labels:"
+        currentKey = key;
+        inList = true;
+        if (!frontmatter[currentKey]) {
+          frontmatter[currentKey] = [];
+        }
+      } else {
+        // Regular key-value pair
+        frontmatter[key] = value;
+        inList = false;
       }
-      
-      frontmatter[key.trim()] = value;
+    } else if (inList && line.trim().startsWith('- ')) {
+      // Continue list item
+      const listItem = line.trim().slice(2).trim().replace(/^["']|["']$/g, '');
+      frontmatter[currentKey].push(listItem);
+    } else if (inList && line.trim() !== '') {
+      // Check if this is a continuation of the list item (indented line)
+      const listItem = line.trim().replace(/^["']|["']$/g, '');
+      frontmatter[currentKey].push(listItem);
+    } else {
+      // Not a list item, not a key-value pair
+      inList = false;
     }
   }
   
