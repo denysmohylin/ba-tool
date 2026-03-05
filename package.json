@@ -1,0 +1,23 @@
+{
+  "name": "ba-tool",
+  "version": "1.0.0",
+  "description": "A tool for Business Analysts to create GitHub issues from documentation files. This tool automates the process of converting BA documents into development and QA tasks.",
+  "homepage": "https://github.com/denysmohylin/ba-tool#readme",
+  "bugs": {
+    "url": "https://github.com/denysmohylin/ba-tool/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/denysmohylin/ba-tool.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
