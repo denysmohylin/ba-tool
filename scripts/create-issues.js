@@ -16,8 +16,11 @@ async function createIssue(doc, repoOwner, repoName, token) {
   // Build issue body from document content
   const issueBody = buildIssueBody(doc);
   
+  // Clean up title (remove quotes if present)
+  const cleanTitle = doc.title ? doc.title.replace(/^["']|["']$/g, '') : '';
+  
   const payload = {
-    title: doc.title,
+    title: cleanTitle,
     body: issueBody,
     labels: doc.labels.length > 0 ? doc.labels : ['documentation'],
     assignees: doc.assignee ? [doc.assignee] : []

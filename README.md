@@ -99,9 +99,20 @@ Create a `config/config.json` file:
 npm install
 ```
 
-3. Create a `.env` file:
+3. Configure GitHub credentials in `config/config.json`:
+```json
+{
+  "repoOwner": "your-github-username",
+  "repoName": "your-repository-name",
+  "token": "your_personal_access_token"
+}
+```
+
+Or set environment variables:
 ```env
 GITHUB_TOKEN=your_personal_access_token
+GITHUB_OWNER=your-github-username
+GITHUB_REPO=your-repository-name
 ```
 
 4. Run the parser:
@@ -115,6 +126,25 @@ node scripts/create-issues.js
 ```
 
 ## GitHub Actions Workflow
+
+### Setup
+
+To enable automated issue creation via GitHub Actions:
+
+1. Create a Personal Access Token (PAT) with `repo` scope:
+   - Go to GitHub Settings → Developer settings → Personal access tokens
+   - Generate a new token with `repo` scope checked
+   - Copy the generated token
+
+2. Add the PAT as a repository secret:
+   - Go to your repository → Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Name: `BA_TOOL_PAT`
+   - Value: (paste your PAT)
+
+3. Commit and push changes to trigger the workflow
+
+### Workflow Triggers
 
 The workflow automatically runs when:
 - A document in `docs/` is pushed to `main` or `master`
