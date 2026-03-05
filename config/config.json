@@ -1,0 +1,12 @@
+{
+  "repoOwner": "",
+  "repoName": "",
+  "token": "",
+  "docsDir": "docs",
+  "defaultLabels": ["documentation", "triage"],
+  "defaultAssignee": "",
+  "issueTemplate": {
+    "titlePrefix": "",
+    "titleSuffix": ""
+  }
+}

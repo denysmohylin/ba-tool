@@ -1,0 +1,57 @@
+name: Create GitHub Issues from Docs
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      docs_dir:
+        description: 'Directory containing documentation files'
+        required: false
+        default: 'docs'
+
+jobs:
+  create-issues:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Configure GitHub credentials
+        run: |
+          echo "GITHUB_OWNER=${{ github.repository_owner }}" >> $GITHUB_ENV
+          echo "GITHUB_REPO=$(echo ${{ github.repository }} | cut -d'/' -f2)" >> $GITHUB_ENV
+          echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
+          echo "DOCS_DIR=${{ github.event.inputs.docs_dir || 'docs' }}" >> $GITHUB_ENV
+
+      - name: Run issue creator script
+        run: node scripts/create-issues.js
+        env:
+          GITHUB_OWNER: ${{ env.GITHUB_OWNER }}
+          GITHUB_REPO: ${{ env.GITHUB_REPO }}
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+          DOCS_DIR: ${{ env.DOCS_DIR }}
+
+      - name: Upload issue creation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: created-issues
+          path: |
+            created-issues.json
+            issue-summary.txt
+          retention-days: 7
