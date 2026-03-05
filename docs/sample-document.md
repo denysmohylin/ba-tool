@@ -1,5 +1,5 @@
 ---
-title: "Sample Feature Request"
+title: "Sample Feature Request - Main"
 description: "A sample document demonstrating the BA tool document format"
 type: "feature"
 priority: "high"
