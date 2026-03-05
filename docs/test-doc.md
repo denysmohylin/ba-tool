@@ -23,7 +23,7 @@ This is a sample document that demonstrates how to write requirements using the 
 
 ### US-001: Main User Story
 
-**As a** business user9  
+**As a** business user10  
 **I want to** be able to upload documents  
 **So that** I can automatically create GitHub issues
 

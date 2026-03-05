@@ -22,9 +22,13 @@ async function createIssue(doc, repoOwner, repoName, token) {
   const payload = {
     title: cleanTitle,
     body: issueBody,
-    labels: doc.labels.length > 0 ? doc.labels : ['documentation'],
-    assignees: doc.assignee ? [doc.assignee] : []
+    labels: doc.labels.length > 0 ? doc.labels : ['documentation']
   };
+  
+  // Only add assignees if there's a valid assignee
+  if (doc.assignee) {
+    payload.assignees = [doc.assignee];
+  }
   
   try {
     const response = await fetch(url, {
