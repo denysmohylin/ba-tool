@@ -127,22 +127,23 @@ node scripts/create-issues.js
 
 ## GitHub Actions Workflow
 
-### Setup
+The workflow automatically runs when:
+- A document in `docs/` is pushed to `main` or `master`
+- Manually triggered via workflow dispatch
 
-To enable automated issue creation via GitHub Actions:
+The workflow will:
+1. Checkout the repository
+2. Parse all documents in `docs/`
+3. Create GitHub issues for each document
+4. Upload a summary of created issues
 
-1. Create a Personal Access Token (PAT) with `repo` scope:
-   - Go to GitHub Settings → Developer settings → Personal access tokens
-   - Generate a new token with `repo` scope checked
-   - Copy the generated token
+### How It Works
 
-2. Add the PAT as a repository secret:
-   - Go to your repository → Settings → Secrets and variables → Actions
-   - Click "New repository secret"
-   - Name: `BA_TOOL_PAT`
-   - Value: (paste your PAT)
+The workflow uses GitHub's built-in `GITHUB_TOKEN` which is automatically available to actions running in the repository. No additional setup is required for basic usage.
 
-3. Commit and push changes to trigger the workflow
+**Note:** If you encounter permission issues, you may need to configure repository secrets:
+- Go to Settings → Secrets and variables → Actions
+- Ensure `GITHUB_TOKEN` has the necessary permissions
 
 ### Workflow Triggers
 

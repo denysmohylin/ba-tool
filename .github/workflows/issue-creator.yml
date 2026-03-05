@@ -35,7 +35,7 @@ jobs:
         run: |
           echo "GITHUB_OWNER=${{ github.repository_owner }}" >> $GITHUB_ENV
           echo "GITHUB_REPO=$(echo ${{ github.repository }} | cut -d'/' -f2)" >> $GITHUB_ENV
-          echo "GITHUB_TOKEN=${{ secrets.BA_TOOL_PAT }}" >> $GITHUB_ENV
+          echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
           echo "DOCS_DIR=${{ github.event.inputs.docs_dir || 'docs' }}" >> $GITHUB_ENV
 
       - name: Run issue creator script
